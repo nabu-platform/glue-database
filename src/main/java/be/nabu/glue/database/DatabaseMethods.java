@@ -135,7 +135,7 @@ public class DatabaseMethods {
 		while (matcher.find()) {
 			inputNames.add(matcher.group().substring(1));
 		}
-		PreparedStatement preparedStatement = connection.prepareStatement(ScriptMethods.string(sql.replaceAll(":[\\w]+", "?")));
+		PreparedStatement preparedStatement = connection.prepareStatement(ScriptMethods.string(sql.replaceAll(":[\\w]+", "?"), true));
 		Map<String, Object> pipeline = ScriptRuntime.getRuntime().getExecutionContext().getPipeline();
 		for (int i = 0; i < inputNames.size(); i++) {
 			if (pipeline.get(inputNames.get(i)) == null) {
@@ -160,7 +160,7 @@ public class DatabaseMethods {
 	}
 	
 	private static void checkSql(boolean fail, String description, String sql, Object...expected) throws ExecutionException, IOException, ParseException {
-		sql = ScriptMethods.string(sql);
+		sql = ScriptMethods.string(sql, true);
 		StringBuilder builder = new StringBuilder();
 		String method = fail ? "confirm" : "validate";
 		builder.append("actual = database.select(\"" + sql + "\")\n");
