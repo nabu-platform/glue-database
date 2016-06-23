@@ -24,6 +24,8 @@ import com.zaxxer.hikari.HikariDataSource;
 
 import be.nabu.glue.ScriptRuntime;
 import be.nabu.glue.VirtualScript;
+import be.nabu.glue.annotations.GlueMethod;
+import be.nabu.glue.annotations.GlueParam;
 import be.nabu.glue.api.ExecutionException;
 import be.nabu.glue.impl.methods.ScriptMethods;
 import be.nabu.libs.evaluator.annotations.MethodProviderClass;
@@ -66,7 +68,31 @@ public class DatabaseMethods {
 		return sql(sql, null);
 	}
 	
-	public static Object[] sql(String sql, String database) throws SQLException, IOException {
+	@GlueMethod(description = "Define a new datasource at runtime")
+	public void datasource(@GlueParam(name = "name", description = "The name of the datasource") String name, @GlueParam(name = "driver") String driver, @GlueParam(name = "jdbcUrl") String jdbcUrl, @GlueParam(name = "userName") String userName, @GlueParam(name = "password") String password) {
+		String environment = ScriptRuntime.getRuntime().getExecutionContext().getExecutionEnvironment().getName();
+		if (!datasources.containsKey(environment + "." + name)) {
+			synchronized(datasources) {
+				if (!datasources.containsKey(environment + "." + name)) {
+					Properties properties = new Properties();
+					properties.put("driverClassName", driver);
+					properties.put("jdbcUrl", jdbcUrl);
+					if (userName != null) {
+						properties.put("username", userName);
+					}
+					if (password != null) {
+						properties.put("password", password);
+					}
+					properties.put("autoCommit", "true");
+					HikariDataSource datasource = new HikariDataSource(new HikariConfig(properties));
+					datasources.put(environment + "." + name, datasource);
+				}
+			}
+		}
+	}
+	
+	@GlueMethod(description = "Run an sql on a database")
+	public static Object[] sql(@GlueParam(name = "sql") String sql, @GlueParam(name = "database") String database) throws SQLException, IOException {
 		// get the first keyword from the sql, it can be select or 
 		String keyword = sql.replaceAll("^[^\\w]*([\\w]+).*$", "$1");
 		if (keyword.equalsIgnoreCase("select")) {
@@ -80,12 +106,9 @@ public class DatabaseMethods {
 			return matrix;
 		}
 	}
-	
-	public static Object[] update(String sql) throws SQLException, IOException {
-		return update(sql, null);
-	}
-	
-	public static Object[] update(String sql, String database) throws SQLException, IOException {
+
+	@GlueMethod(description = "Run an insert/update/delete statement on the database")
+	public static Object[] update(@GlueParam(name = "sql") String sql, @GlueParam(name = "database") String database) throws SQLException, IOException {
 		List<Object> values = new ArrayList<Object>();
 		Connection connection = getConnection(database);
 		try {
@@ -102,11 +125,8 @@ public class DatabaseMethods {
 		}
 	}
 	
-	public static Object[] select(String sql) throws SQLException, IOException {
-		return select(sql, null);
-	}
-	
-	public static Object[] select(String sql, String database) throws SQLException, IOException {
+	@GlueMethod(description = "Run a select on the database")
+	public static Object[] select(@GlueParam(name = "sql") String sql, @GlueParam(name = "database") String database) throws SQLException, IOException {
 		Connection connection = getConnection(database);
 		try {
 			PreparedStatement preparedStatement = prepare(connection, sql, database);
@@ -151,11 +171,13 @@ public class DatabaseMethods {
 		return preparedStatement;
 	}
 	
-	public static void validateSql(String description, String sql, Object...expected) throws ExecutionException, IOException, ParseException {
+	@GlueMethod(description = "Run a select statement on the database and validate the results")
+	public static void validateSql(@GlueParam(name = "description") String description, @GlueParam(name = "sql") String sql, @GlueParam(name = "expected") Object...expected) throws ExecutionException, IOException, ParseException {
 		checkSql(false, description, sql, expected);
 	}
 	
-	public static void confirmSql(String description, String sql, Object...expected) throws ExecutionException, IOException, ParseException {
+	@GlueMethod(description = "Run a select statement on the database and validate the results")
+	public static void confirmSql(@GlueParam(name = "description") String description, @GlueParam(name = "sql") String sql, @GlueParam(name = "expected") Object...expected) throws ExecutionException, IOException, ParseException {
 		checkSql(true, description, sql, expected);
 	}
 	
