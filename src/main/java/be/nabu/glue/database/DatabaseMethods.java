@@ -35,7 +35,7 @@ public class DatabaseMethods {
 	
 	private static Map<String, DataSource> datasources = new HashMap<String, DataSource>();
 	
-	private static DataSource getDataSource(String name) {
+	static DataSource getDataSource(String name) {
 		String environment = ScriptRuntime.getRuntime().getExecutionContext().getExecutionEnvironment().getName();
 		if (!datasources.containsKey(environment + "." + name)) {
 			synchronized(datasources) {
@@ -60,10 +60,11 @@ public class DatabaseMethods {
 		return datasources.get(environment + "." + name);
 	}
 	
-	private static Connection getConnection(String name) throws SQLException {
+	static Connection getConnection(String name) throws SQLException {
 		return getDataSource(name).getConnection();
 	}
 	
+	@GlueMethod(version = 1)
 	public static Object[] sql(String sql) throws SQLException, IOException {
 		return sql(sql, null);
 	}
@@ -91,7 +92,7 @@ public class DatabaseMethods {
 		}
 	}
 	
-	@GlueMethod(description = "Run an sql on a database")
+	@GlueMethod(description = "Run an sql on a database", version = 1)
 	public static Object[] sql(@GlueParam(name = "sql") String sql, @GlueParam(name = "database") String database) throws SQLException, IOException {
 		// get the first keyword from the sql, it can be select or 
 		String keyword = sql.replaceAll("^[^\\w]*([\\w]+).*$", "$1");
@@ -107,7 +108,7 @@ public class DatabaseMethods {
 		}
 	}
 
-	@GlueMethod(description = "Run an insert/update/delete statement on the database")
+	@GlueMethod(description = "Run an insert/update/delete statement on the database", version = 1)
 	public static Object[] update(@GlueParam(name = "sql") String sql, @GlueParam(name = "database") String database) throws SQLException, IOException {
 		List<Object> values = new ArrayList<Object>();
 		Connection connection = getConnection(database);
@@ -125,7 +126,7 @@ public class DatabaseMethods {
 		}
 	}
 	
-	@GlueMethod(description = "Run a select on the database")
+	@GlueMethod(description = "Run a select on the database", version = 1)
 	public static Object[] select(@GlueParam(name = "sql") String sql, @GlueParam(name = "database") String database) throws SQLException, IOException {
 		Connection connection = getConnection(database);
 		try {
@@ -148,7 +149,7 @@ public class DatabaseMethods {
 		}
 	}
 
-	private static PreparedStatement prepare(Connection connection, String sql, String database) throws SQLException, IOException {
+	static PreparedStatement prepare(Connection connection, String sql, String database) throws SQLException, IOException {
 		Pattern pattern = Pattern.compile(":[\\w]+");
 		Matcher matcher = pattern.matcher(sql);
 		List<String> inputNames = new ArrayList<String>();

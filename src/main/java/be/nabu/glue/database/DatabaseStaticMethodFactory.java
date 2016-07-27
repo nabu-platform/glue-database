@@ -11,6 +11,7 @@ public class DatabaseStaticMethodFactory implements StaticMethodFactory {
 	public List<Class<?>> getStaticMethodClasses() {
 		List<Class<?>> classes = new ArrayList<Class<?>>();
 		classes.add(DatabaseMethods.class);
+		classes.add(DatabaseMethodsV2.class);
 		return classes;
 	}
 
