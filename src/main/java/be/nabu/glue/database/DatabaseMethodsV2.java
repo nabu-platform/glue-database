@@ -16,7 +16,7 @@ import be.nabu.libs.evaluator.annotations.MethodProviderClass;
 @MethodProviderClass(namespace = "database")
 public class DatabaseMethodsV2 {
 
-	@GlueMethod(description = "Run an insert/update/delete statement on the database", version = 1)
+	@GlueMethod(description = "Run an insert/update/delete statement on the database", version = 2)
 	public static Iterable<?> update(@GlueParam(name = "sql") String sql, @GlueParam(name = "database") String database) throws SQLException, IOException {
 		List<Object> values = new ArrayList<Object>();
 		Connection connection = DatabaseMethods.getConnection(database);
@@ -34,7 +34,7 @@ public class DatabaseMethodsV2 {
 		}
 	}
 	
-	@GlueMethod(description = "Run a select on the database", version = 1)
+	@GlueMethod(description = "Run a select on the database", version = 2)
 	public static Iterable<?> select(@GlueParam(name = "sql") String sql, @GlueParam(name = "database") String database) throws SQLException, IOException {
 		Connection connection = DatabaseMethods.getConnection(database);
 		try {
