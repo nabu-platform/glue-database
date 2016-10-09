@@ -22,12 +22,12 @@ import javax.sql.DataSource;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
-import be.nabu.glue.ScriptRuntime;
-import be.nabu.glue.VirtualScript;
 import be.nabu.glue.annotations.GlueMethod;
 import be.nabu.glue.annotations.GlueParam;
 import be.nabu.glue.api.ExecutionException;
-import be.nabu.glue.impl.methods.ScriptMethods;
+import be.nabu.glue.core.impl.methods.ScriptMethods;
+import be.nabu.glue.utils.ScriptRuntime;
+import be.nabu.glue.utils.VirtualScript;
 import be.nabu.libs.evaluator.annotations.MethodProviderClass;
 
 @MethodProviderClass(namespace = "database")
@@ -70,7 +70,7 @@ public class DatabaseMethods {
 	}
 	
 	@GlueMethod(description = "Define a new datasource at runtime")
-	public void datasource(@GlueParam(name = "name", description = "The name of the datasource") String name, @GlueParam(name = "driver") String driver, @GlueParam(name = "jdbcUrl") String jdbcUrl, @GlueParam(name = "userName") String userName, @GlueParam(name = "password") String password) {
+	public static void datasource(@GlueParam(name = "name", description = "The name of the datasource") String name, @GlueParam(name = "driver") String driver, @GlueParam(name = "jdbcUrl") String jdbcUrl, @GlueParam(name = "userName") String userName, @GlueParam(name = "password") String password) {
 		String environment = ScriptRuntime.getRuntime().getExecutionContext().getExecutionEnvironment().getName();
 		if (!datasources.containsKey(environment + "." + name)) {
 			synchronized(datasources) {
@@ -150,13 +150,14 @@ public class DatabaseMethods {
 	}
 
 	static PreparedStatement prepare(Connection connection, String sql, String database) throws SQLException, IOException {
-		Pattern pattern = Pattern.compile(":[\\w]+");
+		String regex = "(?<!:):[\\w]+";
+		Pattern pattern = Pattern.compile(regex);
 		Matcher matcher = pattern.matcher(sql);
 		List<String> inputNames = new ArrayList<String>();
 		while (matcher.find()) {
 			inputNames.add(matcher.group().substring(1));
 		}
-		PreparedStatement preparedStatement = connection.prepareStatement(ScriptMethods.string(sql.replaceAll(":[\\w]+", "?"), true));
+		PreparedStatement preparedStatement = connection.prepareStatement(ScriptMethods.string(sql.replaceAll(regex, "?"), true));
 		Map<String, Object> pipeline = ScriptRuntime.getRuntime().getExecutionContext().getPipeline();
 		for (int i = 0; i < inputNames.size(); i++) {
 			if (pipeline.get(inputNames.get(i)) == null) {
